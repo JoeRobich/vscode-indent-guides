@@ -1,9 +1,23 @@
 {
 	"name": "indent-guides",
-	"displayName": "indent-guides",
+	"displayName": "Indent Guides",
 	"description": "Render vertical lines to signify code level.",
 	"version": "0.0.1",
 	"publisher": "JoeyRobichaud",
+	"icon": "/images/icon.png",
+	"galleryBanner": {
+        "color": "#1E1E1E",
+        "theme": "dark"
+    },
+	"license": "SEE LICENSE IN LICENSE.TXT",
+	"bugs": {
+        "url": "https://github.com/JoeRobich/vscode-indent-guides/issues"
+    },
+    "homepage": "https://github.com/JoeRobich/vscode-indent-guides/blob/master/README.md",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/JoeRobich/vscode-indent-guides.git"
+	},
 	"engines": {
 		"vscode": "^0.10.1"
 	},
