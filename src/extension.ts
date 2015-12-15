@@ -2,11 +2,11 @@ import {window, commands, Position, Range, TextLine, TextDocument, TextEditorDec
 import * as _ from 'lodash';
 
 export function activate(context:ExtensionContext) {
-	var decorator = new GuideDecorator();
-	var controller = new IndentGuideController(decorator);
-	
-	context.subscriptions.push(decorator);
-	context.subscriptions.push(controller);
+    var decorator = new GuideDecorator();
+    var controller = new IndentGuideController(decorator);
+    
+    context.subscriptions.push(decorator);
+    context.subscriptions.push(controller);
 }
 
 class IndentGuideController {
@@ -29,19 +29,19 @@ class IndentGuideController {
 class GuideDecorator {
     private _indentGuide:TextEditorDecorationType = window.createTextEditorDecorationType({outlineWidth: "1px", outlineStyle: "solid"});
     
-	public updateIndentGuides():void {
-		let editor = window.activeTextEditor;
-		if (!editor)
-			return;
+    public updateIndentGuides():void {
+        let editor = window.activeTextEditor;
+        if (!editor)
+            return;
             
         let lines:TextLine[] = this.getNonEmptyLines(editor.document);
-       	let ranges:Range[] = _(lines)
+           let ranges:Range[] = _(lines)
             .map(line => this.getGuideStops(line, editor.options.tabSize))
             .flatten<Range>()
             .value();
             
         editor.setDecorations(this._indentGuide, ranges);
-	}
+    }
     
     getNonEmptyLines(document:TextDocument):TextLine[] {
         return _(_.range(0, document.lineCount))
@@ -58,7 +58,7 @@ class GuideDecorator {
             .map(position => new Range(position, position))
             .value();
     }
-		
+        
     dispose():void {
         this._indentGuide.dispose();
     }
