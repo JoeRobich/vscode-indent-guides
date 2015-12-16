@@ -32,14 +32,8 @@ class GuideDecorator {
     }
     
     updateIndentGuides(editor:TextEditor):void {
-        if (!editor)
+        if (this.doesEditorNeedUpdating(editor))
             return;
-        
-        let documentId = `${editor.document.fileName}:${editor.document.version}`;
-        if (documentId === this._lastDocumentId)
-            return;
-        
-        this._lastDocumentId = documentId;
         
         let ranges:Range[] = this.getIndentedLines(editor.document)
             .map(line => this.getGuideStops(line, editor.options.tabSize))
@@ -62,6 +56,18 @@ class GuideDecorator {
         return range(1, depth)
             .map(stop => new Position(line.lineNumber, stop * stopSize))
             .map(position => new Range(position, position));
+    }
+    
+    doesEditorNeedUpdating(editor:TextEditor):boolean {
+        if (!editor)
+            return false;
+        
+        let documentId = `${editor.document.fileName}:${editor.document.version}`;
+        if (documentId === this._lastDocumentId)
+            return false;
+        
+        this._lastDocumentId = documentId;
+        return true;        
     }
     
     public reset() {
