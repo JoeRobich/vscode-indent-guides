@@ -34,8 +34,7 @@ class GuideDecorator {
         if (!editor)
             return;
         
-        let lines:TextLine[] = this.getNonEmptyLines(editor.document);
-           let ranges:Range[] = _(lines)
+        let ranges:Range[] = _(this.getIndentedLines(editor.document))
             .map(line => this.getGuideStops(line, editor.options.tabSize))
             .flatten<Range>()
             .value();
@@ -43,7 +42,7 @@ class GuideDecorator {
         editor.setDecorations(this._indentGuide, ranges);
     }
     
-    getNonEmptyLines(document:TextDocument):TextLine[] {
+    getIndentedLines(document:TextDocument):TextLine[] {
         return _(_.range(0, document.lineCount))
             .map(lineNumber => document.lineAt(lineNumber))
             .filter(line => line.firstNonWhitespaceCharacterIndex != 0)
@@ -51,11 +50,11 @@ class GuideDecorator {
     }
     
     getGuideStops(line:TextLine, tabSize:number):Range[] {
-        tabSize = line.text[0] === '\t' ? 1 : tabSize; // Currently expects the indentation to be either tabs or spaces. Produces strange output when both are used on the same line.
+        let stopSize = line.text[0] === '\t' ? 1 : tabSize; // Currently expects the indentation to be either tabs or spaces. Produces strange output when both are used on the same line.
         let indentation = line.isEmptyOrWhitespace ? line.text.length : line.firstNonWhitespaceCharacterIndex;
-        let depth = indentation / tabSize;
+        let depth = indentation / stopSize;
         return _(_.range(1, depth))
-            .map(step => new Position(line.lineNumber, step * tabSize))
+            .map(stop => new Position(line.lineNumber, stop * stopSize))
             .map(position => new Range(position, position))
             .value();
     }
