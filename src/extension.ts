@@ -17,7 +17,7 @@ class IndentGuideController {
         window.onDidChangeTextEditorSelection(guideDecorator.updateIndentGuides, guideDecorator, subscriptions);
         window.onDidChangeActiveTextEditor(guideDecorator.updateIndentGuides, guideDecorator, subscriptions);
         this._disposable = Disposable.from(...subscriptions);
-    
+        
         guideDecorator.updateIndentGuides();
     }
 
@@ -59,7 +59,7 @@ class GuideDecorator {
             .map(position => new Range(position, position))
             .value();
     }
-        
+    
     dispose():void {
         this._indentGuide.dispose();
     }

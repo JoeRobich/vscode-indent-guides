@@ -1,8 +1,8 @@
 {
 	"name": "indent-guides",
 	"displayName": "Indent Guides",
-	"description": "Render vertical lines to signify code level.",
-	"version": "0.0.1",
+	"description": "This extensions adds indent guides to the editor.",
+	"version": "0.0.2",
 	"publisher": "JoeyRobichaud",
 	"icon": "/images/icon.png",
 	"galleryBanner": {
@@ -34,8 +34,10 @@
 		"vscode:prepublish": "node ./node_modules/vscode/bin/compile",
 		"compile": "node ./node_modules/vscode/bin/compile -watch -p ./"
 	},
+	"dependencies": {
+		"lodash": "^3.10.1"
+	},
 	"devDependencies": {
-		"lodash": "^3.10.1",
 		"typescript": "^1.6.2",
 		"vscode": "0.10.x"
 	}
