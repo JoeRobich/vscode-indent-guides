@@ -1,38 +1,45 @@
-import {window, commands, Position, Range, TextLine, TextDocument, TextEditorDecorationType, ExtensionContext, Disposable} from 'vscode'; 
+import {workspace, window, commands, Position, Range, TextLine, TextDocument, TextEditor, TextEditorDecorationType, ExtensionContext, Disposable} from 'vscode'; 
 import {range} from 'lodash';
 
 export function activate(context:ExtensionContext) {
-    var decorator = new GuideDecorator();
-    var controller = new IndentGuideController(decorator);
+    let guideDecorator = new GuideDecorator();
     
-    context.subscriptions.push(decorator);
-    context.subscriptions.push(controller);
-}
-
-class IndentGuideController {
-    private _disposable: Disposable;
-
-    constructor(guideDecorator:GuideDecorator) {
-        let subscriptions:Disposable[] = [];
-        window.onDidChangeTextEditorSelection(guideDecorator.updateIndentGuides, guideDecorator, subscriptions);
-        window.onDidChangeActiveTextEditor(guideDecorator.updateIndentGuides, guideDecorator, subscriptions);
-        this._disposable = Disposable.from(...subscriptions);
-        
-        guideDecorator.updateIndentGuides();
-    }
-
-    dispose():void {
-        this._disposable.dispose();
-    }
+    // Hook Events
+    let subscriptions:Disposable[] = [];
+    window.onDidChangeTextEditorSelection(guideDecorator.updateActiveEditor, guideDecorator, subscriptions);
+    window.onDidChangeActiveTextEditor(guideDecorator.updateActiveEditor, guideDecorator, subscriptions);
+    workspace.onDidChangeConfiguration(guideDecorator.reset, guideDecorator, subscriptions);
+    let eventDisposable = Disposable.from(...subscriptions);
+    
+    // Register Disposables
+    context.subscriptions.push(guideDecorator);
+    context.subscriptions.push(eventDisposable);
+    
+    guideDecorator.reset();
 }
 
 class GuideDecorator {
-    private _indentGuide:TextEditorDecorationType = window.createTextEditorDecorationType({outlineWidth: "1px", outlineStyle: "solid"});
+    private _indentGuide:TextEditorDecorationType = null;
+    private _lastDocumentId:string = "";
     
-    public updateIndentGuides():void {
-        let editor = window.activeTextEditor;
+    public updateActiveEditor():void {
+        this.updateIndentGuides(window.activeTextEditor);
+    }
+    
+    updateVisibleEditors():void {
+        for (let editor of window.visibleTextEditors)
+            this.updateIndentGuides(editor);
+    }
+    
+    updateIndentGuides(editor:TextEditor):void {
         if (!editor)
             return;
+        
+        let documentId = `${editor.document.fileName}:${editor.document.version}`;
+        if (documentId === this._lastDocumentId)
+            return;
+        
+        this._lastDocumentId = documentId;
         
         let ranges:Range[] = this.getIndentedLines(editor.document)
             .map(line => this.getGuideStops(line, editor.options.tabSize))
@@ -57,7 +64,23 @@ class GuideDecorator {
             .map(position => new Range(position, position));
     }
     
-    dispose():void {
-        this._indentGuide.dispose();
+    public reset() {
+        this.dispose();
+        this._indentGuide = this.createIndentGuideDecoration();
+        this.updateVisibleEditors();
+    }
+    
+    createIndentGuideDecoration():TextEditorDecorationType {
+        var configuration:any = workspace.getConfiguration("indent-guide");
+        return window.createTextEditorDecorationType({
+            outlineColor: configuration.color,
+            outlineWidth: "1px",
+            outlineStyle: configuration.style
+        });
+    }
+    
+    dispose() {
+        if (this._indentGuide !== null)
+            this._indentGuide.dispose();
     }
 }
