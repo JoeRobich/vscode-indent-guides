@@ -1,5 +1,5 @@
 import {window, commands, Position, Range, TextLine, TextDocument, TextEditorDecorationType, ExtensionContext, Disposable} from 'vscode'; 
-import * as _ from 'lodash';
+import {range} from 'lodash';
 
 export function activate(context:ExtensionContext) {
     var decorator = new GuideDecorator();
@@ -34,29 +34,27 @@ class GuideDecorator {
         if (!editor)
             return;
         
-        let ranges:Range[] = _(this.getIndentedLines(editor.document))
+        let ranges:Range[] = this.getIndentedLines(editor.document)
             .map(line => this.getGuideStops(line, editor.options.tabSize))
-            .flatten<Range>()
-            .value();
+            .reduce((all, ranges) => all.concat(ranges), []);
         
         editor.setDecorations(this._indentGuide, ranges);
     }
     
     getIndentedLines(document:TextDocument):TextLine[] {
-        return _(_.range(0, document.lineCount))
+        return range(0, document.lineCount)
             .map(lineNumber => document.lineAt(lineNumber))
-            .filter(line => line.firstNonWhitespaceCharacterIndex != 0)
-            .value();
+            .filter(line => line.firstNonWhitespaceCharacterIndex != 0);
     }
     
     getGuideStops(line:TextLine, tabSize:number):Range[] {
         let stopSize = line.text[0] === '\t' ? 1 : tabSize; // Currently expects the indentation to be either tabs or spaces. Produces strange output when both are used on the same line.
         let indentation = line.isEmptyOrWhitespace ? line.text.length : line.firstNonWhitespaceCharacterIndex;
         let depth = indentation / stopSize;
-        return _(_.range(1, depth))
+        
+        return range(1, depth)
             .map(stop => new Position(line.lineNumber, stop * stopSize))
-            .map(position => new Range(position, position))
-            .value();
+            .map(position => new Range(position, position));
     }
     
     dispose():void {
