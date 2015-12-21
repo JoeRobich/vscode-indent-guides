@@ -1,12 +1,12 @@
 import {workspace, window, commands, Position, Range, TextLine, TextDocument, TextEditor, TextEditorDecorationType, ExtensionContext, Disposable} from 'vscode'; 
-import {range} from 'lodash';
+import {range, debounce} from 'lodash';
 
 export function activate(context:ExtensionContext) {
     let guideDecorator = new GuideDecorator();
     
     // Hook Events
     let subscriptions:Disposable[] = [];
-    window.onDidChangeTextEditorSelection(guideDecorator.updateActiveEditor, guideDecorator, subscriptions);
+    workspace.onDidChangeTextDocument(debounce(onEditorChange.bind(null, guideDecorator), 50), this, subscriptions);
     window.onDidChangeActiveTextEditor(guideDecorator.updateActiveEditor, guideDecorator, subscriptions);
     workspace.onDidChangeConfiguration(guideDecorator.reset, guideDecorator, subscriptions);
     let eventDisposable = Disposable.from(...subscriptions);
@@ -18,9 +18,19 @@ export function activate(context:ExtensionContext) {
     guideDecorator.reset();
 }
 
+function onEditorChange(guideDecorator:GuideDecorator) {
+    let activeEditor = window.activeTextEditor;
+    let cursorPosition = activeEditor.selection.active;
+    let cursorLine = activeEditor.document.lineAt(cursorPosition.line);
+    let indentation = cursorLine.isEmptyOrWhitespace ? cursorLine.text.length : cursorLine.firstNonWhitespaceCharacterIndex;
+    
+    if (!activeEditor.selection.isEmpty ||          // Change to large area, possibly a snippet.
+        cursorPosition.character <= indentation)    // Change within the indentation area.
+        guideDecorator.updateActiveEditor();
+}
+
 class GuideDecorator {
     private _indentGuide:TextEditorDecorationType = null;
-    private _lastDocumentId:string = "";
     
     public updateActiveEditor():void {
         this.updateIndentGuides(window.activeTextEditor);
@@ -32,14 +42,14 @@ class GuideDecorator {
     }
     
     updateIndentGuides(editor:TextEditor):void {
-        if (this.doesEditorNeedUpdating(editor))
+        if (editor === null)
             return;
         
-        let ranges:Range[] = this.getIndentedLines(editor.document)
+        let guideStops:Range[] = this.getIndentedLines(editor.document)
             .map(line => this.getGuideStops(line, editor.options.tabSize))
             .reduce((all, ranges) => all.concat(ranges), []);
         
-        editor.setDecorations(this._indentGuide, ranges);
+        editor.setDecorations(this._indentGuide, guideStops);
     }
     
     getIndentedLines(document:TextDocument):TextLine[] {
@@ -56,18 +66,6 @@ class GuideDecorator {
         return range(1, depth)
             .map(stop => new Position(line.lineNumber, stop * stopSize))
             .map(position => new Range(position, position));
-    }
-    
-    doesEditorNeedUpdating(editor:TextEditor):boolean {
-        if (!editor)
-            return false;
-        
-        let documentId = `${editor.document.fileName}:${editor.document.version}`;
-        if (documentId === this._lastDocumentId)
-            return false;
-        
-        this._lastDocumentId = documentId;
-        return true;        
     }
     
     public reset() {

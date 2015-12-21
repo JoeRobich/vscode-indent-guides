@@ -2,7 +2,7 @@
 	"name": "indent-guides",
 	"displayName": "Indent Guides",
 	"description": "This extensions adds indent guides to the editor.",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"publisher": "JoeyRobichaud",
 	"icon": "/images/icon.png",
 	"galleryBanner": {
