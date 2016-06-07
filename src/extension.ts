@@ -77,9 +77,9 @@ class GuideDecorator {
     createIndentGuideDecoration():TextEditorDecorationType {
         var configuration:any = workspace.getConfiguration("indent-guide");
         return window.createTextEditorDecorationType({
-            outlineColor: configuration.color,
-            outlineWidth: "1px",
-            outlineStyle: configuration.style
+            borderColor: configuration.color,
+            borderWidth: "0 0 0 1px",
+            borderStyle: configuration.style
         });
     }
     
